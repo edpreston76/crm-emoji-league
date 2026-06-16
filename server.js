@@ -67,7 +67,7 @@ app.get('/api/state', (req, res) => {
 });
 
 app.post('/api/moments', (req, res) => {
-  const { nominee, emoji, context, channel, submittedBy } = req.body;
+  const { nominee, emoji, emojiUrl, context, channel, submittedBy } = req.body;
   if (!nominee || !emoji || !submittedBy) {
     return res.status(400).json({ error: 'Missing fields' });
   }
@@ -82,6 +82,7 @@ app.post('/api/moments', (req, res) => {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
     nominee,
     emoji,
+    emojiUrl: emojiUrl || null,
     context: (context || '').trim().slice(0, 200),
     channel: channel || '#crm-team',
     submittedBy,
@@ -117,7 +118,44 @@ app.post('/api/moments/:id/fire', (req, res) => {
   res.json({ moment: m, leaderboard: computeLeaderboard(moments) });
 });
 
-// ─── Monthly reset ────────────────────────────────────────────────────────────
+// ─── Custom Slack emojis ──────────────────────────────────────────────────────
+
+let emojiCache = null;
+let emojiCacheTime = 0;
+const EMOJI_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
+app.get('/api/custom-emojis', async (req, res) => {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return res.json({ emojis: [] });
+
+  if (emojiCache && Date.now() - emojiCacheTime < EMOJI_CACHE_TTL) {
+    return res.json({ emojis: emojiCache });
+  }
+
+  try {
+    const r = await axios.get('https://slack.com/api/emoji.list', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!r.data.ok) {
+      console.error('[emoji] Slack error:', r.data.error);
+      return res.json({ emojis: [] });
+    }
+    // Filter out aliases, sort alphabetically
+    const emojis = Object.entries(r.data.emoji)
+      .filter(([, url]) => !url.startsWith('alias:'))
+      .map(([name, url]) => ({ name, url }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    emojiCache = emojis;
+    emojiCacheTime = Date.now();
+    console.log(`[emoji] Cached ${emojis.length} custom emojis from Slack`);
+    res.json({ emojis });
+  } catch (e) {
+    console.error('[emoji] Fetch failed:', e.message);
+    res.json({ emojis: [] });
+  }
+});
+
+
 
 async function doReset(targetDate) {
   const date = targetDate || new Date();
