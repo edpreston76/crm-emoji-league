@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,6 +253,14 @@ h1 span{color:var(--gold)}
 .form-input:focus,.form-select:focus{border-color:var(--gold)}
 .form-select{cursor:pointer;appearance:none}
 .form-select option{background:var(--elevated)}
+.custom-ec{
+  width:32px;height:32px;border:2px solid transparent;
+  border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--elevated);transition:all .15s;flex-shrink:0;
+}
+.custom-ec:hover{border-color:var(--gold);background:rgba(245,194,66,.1);transform:scale(1.15)}
+.custom-ec.sel{border-color:var(--gold);background:rgba(245,194,66,.15)}
 emoji-picker{
   --background:#1E1E38;
   --border-color:rgba(100,100,180,0.15);
@@ -362,6 +369,18 @@ emoji-picker{
         <span id="emojiSelectedDisplay" style="font-size:20px;margin-left:8px;vertical-align:middle"></span>
         <span id="emojiSelectedHint" style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">pick one below</span>
       </label>
+      <!-- Cleo custom emojis - shown when SLACK_BOT_TOKEN is configured -->
+      <div id="customEmojiSection" style="display:none;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">
+            Cleo custom <span id="customEmojiCount" style="font-weight:400;text-transform:none;letter-spacing:0"></span>
+          </div>
+          <input type="text" id="customEmojiSearch" placeholder="search..."
+            style="background:var(--bg);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:11px;color:var(--text);outline:none;width:110px">
+        </div>
+        <div id="customEmojiGrid" style="display:flex;flex-wrap:wrap;gap:4px;max-height:100px;overflow-y:auto;padding:2px 0"></div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:10px;margin-bottom:6px">Standard emojis</div>
+      </div>
       <emoji-picker id="emojiPickerEl"></emoji-picker>
     </div>
     <div class="form-field">
@@ -404,6 +423,8 @@ const TEAM = [
 customElements.whenDefined('emoji-picker').then(() => {
   document.getElementById('emojiPickerEl').addEventListener('emoji-click', e => {
     selectedEmoji = e.detail.unicode;
+    selectedEmojiUrl = null;
+    document.querySelectorAll('.custom-ec').forEach(x => x.classList.remove('sel'));
     document.getElementById('emojiSelectedDisplay').textContent = e.detail.unicode;
     document.getElementById('emojiSelectedHint').textContent = 'selected';
   });
@@ -413,9 +434,20 @@ let user = localStorage.getItem('crm-emoji-user');
 let activeTab = 'leaderboard';
 let state = { moments: [], leaderboard: [], hof: [] };
 let selectedEmoji = null;
+let selectedEmojiUrl = null;
 let selectedIdentity = null;
+let customEmojis = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Renders either a Unicode emoji char or a custom Slack emoji <img>
+function emojiHtml(emoji, emojiUrl, size) {
+  size = size || 26;
+  if (emojiUrl) {
+    return `<img src="${esc(emojiUrl)}" alt="${esc(emoji)}" style="width:${size}px;height:${size}px;vertical-align:middle;border-radius:3px">`;
+  }
+  return emoji;
+}
 
 function daysLeft() {
   const n = new Date();
@@ -495,7 +527,7 @@ function momentCard(m) {
   return `<div class="mc">
     <div class="mc-top">
       <div class="mc-left">
-        <div class="mc-emoji">${m.emoji}</div>
+        <div class="mc-emoji">${emojiHtml(m.emoji, m.emojiUrl, 28)}</div>
         <div>
           <div class="mc-who">${esc(m.nominee)}</div>
           <div class="mc-where">${esc(m.channel)}</div>
@@ -526,7 +558,9 @@ function renderLeaderboard() {
     const rank = lb.indexOf(p);
     const isTop = rank === 0;
     const isMe = p.name === user;
-    const displayEmoji = p.topMoment ? p.topMoment.emoji : teamEmoji(p.name);
+    const displayEmoji = p.topMoment
+      ? emojiHtml(p.topMoment.emoji, p.topMoment.emojiUrl, isTop ? 26 : 22)
+      : teamEmoji(p.name);
     html += `<div class="pod${isTop ? ' p1' : ''}${isMe ? ' mine' : ''}">
       <div class="pod-medal">${medals[rank] || '#' + (rank + 1)}</div>
       <div class="pod-name">${esc(p.name)}</div>
@@ -542,7 +576,9 @@ function renderLeaderboard() {
     html += '<div>';
     lb.slice(3).forEach((p, i) => {
       const isMe = p.name === user;
-      const displayEmoji = p.topMoment ? p.topMoment.emoji : teamEmoji(p.name);
+      const displayEmoji = p.topMoment
+        ? emojiHtml(p.topMoment.emoji, p.topMoment.emojiUrl, 22)
+        : teamEmoji(p.name);
       html += `<div class="srow${isMe ? ' mine' : ''}">
         <div class="srow-rank">${i + 4}</div>
         <div class="srow-emoji">${displayEmoji}</div>
@@ -705,7 +741,9 @@ document.getElementById('fabBtn').addEventListener('click', () => {
   document.getElementById('ctxInput').value = '';
   document.getElementById('emojiSelectedDisplay').textContent = '';
   document.getElementById('emojiSelectedHint').textContent = 'pick one below';
+  document.querySelectorAll('.custom-ec').forEach(x => x.classList.remove('sel'));
   selectedEmoji = null;
+  selectedEmojiUrl = null;
   document.getElementById('submitOverlay').classList.add('open');
 });
 document.getElementById('cancelSubmit').addEventListener('click', () => {
@@ -732,6 +770,7 @@ document.getElementById('confirmSubmit').addEventListener('click', async () => {
     await apiPost('/api/moments', {
       nominee,
       emoji: selectedEmoji,
+      emojiUrl: selectedEmojiUrl || null,
       context: document.getElementById('ctxInput').value.trim(),
       channel: document.getElementById('chanSelect').value,
       submittedBy: user
@@ -755,15 +794,59 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
+// ── Custom Slack emojis ───────────────────────────────────────────────────────
+
+function renderCustomEmojiGrid(emojis) {
+  const grid = document.getElementById('customEmojiGrid');
+  grid.innerHTML = '';
+  emojis.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'custom-ec';
+    div.title = `:${e.name}:`;
+    div.innerHTML = `<img src="${e.url}" alt=":${e.name}:" style="width:22px;height:22px">`;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.custom-ec').forEach(x => x.classList.remove('sel'));
+      div.classList.add('sel');
+      selectedEmoji = `:${e.name}:`;
+      selectedEmojiUrl = e.url;
+      const disp = document.getElementById('emojiSelectedDisplay');
+      disp.innerHTML = `<img src="${e.url}" alt=":${e.name}:" style="width:22px;height:22px;vertical-align:middle;border-radius:3px">`;
+      document.getElementById('emojiSelectedHint').textContent = 'selected';
+    });
+    grid.appendChild(div);
+  });
+}
+
+async function loadCustomEmojis() {
+  try {
+    const res = await fetch('/api/custom-emojis');
+    const data = await res.json();
+    customEmojis = data.emojis || [];
+    if (customEmojis.length > 0) {
+      renderCustomEmojiGrid(customEmojis);
+      document.getElementById('customEmojiCount').textContent = `(${customEmojis.length})`;
+      document.getElementById('customEmojiSection').style.display = 'block';
+      document.getElementById('customEmojiSearch').addEventListener('input', ev => {
+        const q = ev.target.value.toLowerCase().trim();
+        renderCustomEmojiGrid(q ? customEmojis.filter(x => x.name.includes(q)) : customEmojis);
+      });
+    }
+  } catch (e) {
+    console.log('Custom emojis not available:', e.message);
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
   renderHeader();
   await refresh();
+  loadCustomEmojis();
   if (!user) setTimeout(openIdentModal, 600);
   setInterval(refresh, 30000); // pick up other team members' changes live
 }
 init();
+</script>
 <script type="module" src="https://unpkg.com/emoji-picker-element@1/index.js"></script>
 </body>
 </html>
