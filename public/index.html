@@ -254,15 +254,22 @@ h1 span{color:var(--gold)}
 .form-input:focus,.form-select:focus{border-color:var(--gold)}
 .form-select{cursor:pointer;appearance:none}
 .form-select option{background:var(--elevated)}
-.emoji-grid{display:flex;flex-wrap:wrap;gap:6px}
-.ec{
-  font-size:20px;width:36px;height:36px;
-  background:var(--elevated);border:2px solid transparent;
-  border-radius:8px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;
+emoji-picker{
+  --background:#1E1E38;
+  --border-color:rgba(100,100,180,0.15);
+  --indicator-color:#F5C242;
+  --input-border-color:rgba(100,100,180,0.2);
+  --input-font-color:#EEEEF8;
+  --input-placeholder-color:#5A5A88;
+  --outline-color:#F5C242;
+  --button-active-background:rgba(245,194,66,.15);
+  --button-hover-background:rgba(245,194,66,.08);
+  --category-font-color:#5A5A88;
+  height:300px;
+  width:100%;
+  border-radius:10px;
+  border:1px solid rgba(100,100,180,0.15);
 }
-.ec:hover{transform:scale(1.2)}
-.ec.sel{border-color:var(--gold);background:rgba(245,194,66,.1)}
 .form-actions{display:flex;gap:10px;margin-top:20px}
 .btn-submit{
   flex:1;
@@ -351,8 +358,11 @@ h1 span{color:var(--gold)}
       </select>
     </div>
     <div class="form-field">
-      <label class="form-label">The emoji they used</label>
-      <div class="emoji-grid" id="emojiGrid"></div>
+      <label class="form-label">The emoji they used
+        <span id="emojiSelectedDisplay" style="font-size:20px;margin-left:8px;vertical-align:middle"></span>
+        <span id="emojiSelectedHint" style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">pick one below</span>
+      </label>
+      <emoji-picker id="emojiPickerEl"></emoji-picker>
     </div>
     <div class="form-field">
       <label class="form-label">Context <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
@@ -389,10 +399,15 @@ const TEAM = [
   { name: 'Millie', emoji: '🔥' },
   { name: 'Juan', emoji: '🤌' }
 ];
-const EMOJIS = [
-  '🔥','💀','😭','👀','🫡','💅','🤌','🧠','🎯','🤡',
-  '💯','🥲','🫠','😮‍💨','🧌','🎉','🫶','🪩','😤','🫥'
-];
+// ── Emoji picker setup ────────────────────────────────────────────────────────
+
+customElements.whenDefined('emoji-picker').then(() => {
+  document.getElementById('emojiPickerEl').addEventListener('emoji-click', e => {
+    selectedEmoji = e.detail.unicode;
+    document.getElementById('emojiSelectedDisplay').textContent = e.detail.unicode;
+    document.getElementById('emojiSelectedHint').textContent = 'selected';
+  });
+});
 
 let user = localStorage.getItem('crm-emoji-user');
 let activeTab = 'leaderboard';
@@ -688,7 +703,8 @@ document.getElementById('fabBtn').addEventListener('click', () => {
   if (!user) { openIdentModal(); return; }
   document.getElementById('nomineeSelect').value = '';
   document.getElementById('ctxInput').value = '';
-  document.querySelectorAll('.ec').forEach(e => e.classList.remove('sel'));
+  document.getElementById('emojiSelectedDisplay').textContent = '';
+  document.getElementById('emojiSelectedHint').textContent = 'pick one below';
   selectedEmoji = null;
   document.getElementById('submitOverlay').classList.add('open');
 });
@@ -705,17 +721,6 @@ TEAM.forEach(t => {
   const opt = document.createElement('option');
   opt.value = t.name; opt.textContent = t.name;
   document.getElementById('nomineeSelect').appendChild(opt);
-});
-
-EMOJIS.forEach(emoji => {
-  const div = document.createElement('div');
-  div.className = 'ec'; div.textContent = emoji;
-  div.addEventListener('click', () => {
-    document.querySelectorAll('.ec').forEach(e => e.classList.remove('sel'));
-    div.classList.add('sel');
-    selectedEmoji = emoji;
-  });
-  document.getElementById('emojiGrid').appendChild(div);
 });
 
 document.getElementById('confirmSubmit').addEventListener('click', async () => {
@@ -759,6 +764,6 @@ async function init() {
   setInterval(refresh, 30000); // pick up other team members' changes live
 }
 init();
-</script>
+<script type="module" src="https://unpkg.com/emoji-picker-element@1/index.js"></script>
 </body>
 </html>
