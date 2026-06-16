@@ -1,0 +1,764 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM Emoji League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#0B0B1A;
+  --card:#141428;
+  --elevated:#1E1E38;
+  --gold:#F5C242;
+  --fire:#FF6935;
+  --green:#00E599;
+  --text:#EEEEF8;
+  --muted:#5A5A88;
+  --border:rgba(100,100,180,0.12);
+  --r:14px;
+}
+
+body{
+  font-family:'Archivo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:90px;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+.header{
+  position:sticky;top:0;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  z-index:50;
+  padding:16px 20px 0;
+}
+.header-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:12px;margin-bottom:12px;
+}
+h1{
+  font-family:'Archivo Black',sans-serif;
+  font-size:26px;line-height:1;letter-spacing:-0.5px;
+}
+h1 span{color:var(--gold)}
+.sub{font-size:11px;color:var(--muted);margin-top:5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.header-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
+
+.btn-ident{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:100px;padding:7px 14px;
+  color:var(--text);
+  font-family:'Archivo',sans-serif;
+  font-size:12px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  transition:border-color .2s;
+}
+.btn-ident:hover{border-color:var(--gold)}
+
+.days-bar{
+  background:var(--elevated);border-radius:8px;
+  padding:8px 12px;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;font-size:12px;
+}
+.days-label{color:var(--muted)}
+.days-right{display:flex;align-items:center;gap:10px}
+.days-progress{width:90px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.days-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--fire));border-radius:3px;transition:width .3s}
+.days-val{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--gold)}
+
+.tabs{display:flex}
+.tab{
+  padding:10px 16px;
+  font-family:'Archivo',sans-serif;font-size:12px;font-weight:700;
+  color:var(--muted);background:none;border:none;
+  border-bottom:2px solid transparent;
+  cursor:pointer;text-transform:uppercase;letter-spacing:.5px;
+  transition:all .2s;margin-bottom:-1px;
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab:hover:not(.active){color:var(--text)}
+.tab-badge{
+  margin-left:5px;background:var(--elevated);
+  border-radius:8px;padding:1px 7px;
+  font-size:10px;color:var(--muted);
+}
+
+/* ── CONTENT ─────────────────────────────────────────────────── */
+.content{padding:20px;max-width:600px;margin:0 auto}
+
+/* ── PODIUM ──────────────────────────────────────────────────── */
+.podium{
+  display:grid;grid-template-columns:1fr 1.15fr 1fr;
+  gap:10px;margin-bottom:20px;align-items:end;
+}
+.pod{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 10px;text-align:center;
+}
+.pod.p1{background:#1A1400;border-color:var(--gold);border-top:3px solid var(--gold)}
+.pod.mine{box-shadow:0 0 0 2px rgba(245,194,66,.25)}
+.pod-medal{font-size:20px;margin-bottom:6px}
+.pod-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-bottom:4px}
+.pod.p1 .pod-name{color:var(--gold);font-size:15px}
+.pod-score{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1}
+.pod.p1 .pod-score{font-size:38px;color:var(--gold)}
+.pod-pts{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.pod-emoji{font-size:22px;margin-top:8px}
+.pod.p1 .pod-emoji{font-size:28px}
+
+/* ── STANDINGS ───────────────────────────────────────────────── */
+.srow{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;
+  display:flex;align-items:center;gap:12px;margin-bottom:8px;
+}
+.srow.mine{border-color:rgba(245,194,66,.3)}
+.srow-rank{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--muted);width:20px;text-align:center;flex-shrink:0}
+.srow-emoji{font-size:22px;flex-shrink:0}
+.srow-info{flex:1}
+.srow-name{font-weight:700;font-size:14px}
+.srow-meta{font-size:12px;color:var(--muted);margin-top:1px}
+.srow-score{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--green)}
+
+/* ── SECTION HEADER ──────────────────────────────────────────── */
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:4px}
+.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.sec-count{background:var(--elevated);border-radius:100px;padding:2px 9px;font-size:11px;color:var(--muted);font-weight:700}
+
+/* ── MOMENT CARDS ────────────────────────────────────────────── */
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.mc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mc-left{display:flex;gap:10px;align-items:flex-start}
+.mc-emoji{font-size:28px;line-height:1}
+.mc-who{font-family:'Archivo Black',sans-serif;font-size:14px}
+.mc-where{font-size:12px;color:var(--muted);margin-top:2px}
+.mc-time{font-size:11px;color:var(--muted);flex-shrink:0}
+.mc-ctx{font-size:13px;color:#BBBBDD;line-height:1.5;margin-bottom:10px}
+.mc-foot{display:flex;justify-content:space-between;align-items:center}
+.mc-by{font-size:11px;color:var(--muted)}
+.fire-btn{
+  background:var(--elevated);border:1px solid var(--border);
+  border-radius:100px;padding:5px 12px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  color:var(--text);font-family:'Archivo',sans-serif;
+  display:flex;align-items:center;gap:4px;transition:all .2s;
+}
+.fire-btn:hover{background:rgba(255,105,53,.15);border-color:var(--fire)}
+.fire-btn.fired{background:rgba(255,105,53,.15);border-color:var(--fire);color:var(--fire)}
+
+/* ── HALL OF FAME ────────────────────────────────────────────── */
+.hof-card{
+  background:#1A1400;border:1px solid var(--gold);border-radius:var(--r);
+  padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;
+}
+.hof-trophy{font-size:34px;flex-shrink:0}
+.hof-info{flex:1}
+.hof-winner{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--gold)}
+.hof-month{font-size:12px;color:#C8A030;margin-top:2px}
+.hof-pts{font-size:13px;color:#A08030;margin-top:4px}
+.hof-emoji{font-size:30px}
+
+.scoring-note{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;margin-top:16px;
+}
+.scoring-note h4{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.scoring-note p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:3px}
+.scoring-note strong{color:var(--text);font-weight:700}
+
+/* ── EMPTY ───────────────────────────────────────────────────── */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty h3{font-family:'Archivo Black',sans-serif;font-size:18px;margin-bottom:6px;color:var(--text)}
+.empty p{font-size:14px}
+
+/* ── FAB ─────────────────────────────────────────────────────── */
+.fab{
+  position:fixed;bottom:20px;right:20px;
+  background:linear-gradient(135deg,var(--gold),#E8A820);
+  color:#0B0B1A;border:none;border-radius:100px;
+  padding:14px 22px;
+  font-family:'Archivo Black',sans-serif;font-size:14px;
+  cursor:pointer;
+  box-shadow:0 4px 20px rgba(245,194,66,.3);
+  z-index:100;transition:transform .2s,box-shadow .2s;
+  display:flex;align-items:center;gap:8px;
+}
+.fab:hover{transform:translateY(-2px);box-shadow:0 6px 26px rgba(245,194,66,.45)}
+.fab:active{transform:translateY(0)}
+
+/* ── MODALS ──────────────────────────────────────────────────── */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(8,8,20,.87);
+  backdrop-filter:blur(4px);
+  z-index:200;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px 20px 16px 16px;
+  padding:24px;width:100%;max-width:480px;
+  transform:translateY(20px);transition:transform .25s;
+}
+.overlay.open .modal{transform:translateY(0)}
+
+.ident-overlay{
+  position:fixed;inset:0;
+  background:rgba(8,8,20,.9);z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.ident-overlay.open{opacity:1;pointer-events:all}
+.ident-modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:28px;width:100%;max-width:360px;text-align:center;
+}
+.ident-modal h2{font-family:'Archivo Black',sans-serif;font-size:22px;margin-bottom:6px}
+.ident-modal p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.team-btn{
+  background:var(--elevated);border:2px solid transparent;
+  border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;
+  color:var(--text);font-family:'Archivo',sans-serif;transition:all .2s;
+}
+.team-btn:hover{border-color:var(--gold);background:rgba(245,194,66,.08)}
+.team-btn.sel{border-color:var(--gold);background:rgba(245,194,66,.12)}
+.team-btn .te{font-size:28px;margin-bottom:6px}
+.team-btn .tn{font-weight:700;font-size:13px}
+
+/* ── FORM ────────────────────────────────────────────────────── */
+.modal-title{font-family:'Archivo Black',sans-serif;font-size:20px;margin-bottom:20px}
+.form-field{margin-bottom:16px}
+.form-label{
+  display:block;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);margin-bottom:6px;
+}
+.form-input,.form-select{
+  width:100%;background:var(--elevated);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;color:var(--text);
+  font-family:'Archivo',sans-serif;font-size:14px;outline:none;transition:border-color .2s;
+}
+.form-input:focus,.form-select:focus{border-color:var(--gold)}
+.form-select{cursor:pointer;appearance:none}
+.form-select option{background:var(--elevated)}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px}
+.ec{
+  font-size:20px;width:36px;height:36px;
+  background:var(--elevated);border:2px solid transparent;
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.ec:hover{transform:scale(1.2)}
+.ec.sel{border-color:var(--gold);background:rgba(245,194,66,.1)}
+.form-actions{display:flex;gap:10px;margin-top:20px}
+.btn-submit{
+  flex:1;
+  background:linear-gradient(135deg,var(--gold),#E8A820);
+  color:#0B0B1A;border:none;border-radius:10px;padding:12px;
+  font-family:'Archivo Black',sans-serif;font-size:14px;cursor:pointer;transition:opacity .2s;
+}
+.btn-submit:hover{opacity:.9}
+.btn-cancel{
+  background:var(--elevated);color:var(--muted);
+  border:1px solid var(--border);border-radius:10px;
+  padding:12px 18px;
+  font-family:'Archivo',sans-serif;font-weight:700;font-size:14px;cursor:pointer;
+}
+.btn-cancel:hover{color:var(--text)}
+
+/* ── TOAST ───────────────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:var(--elevated);border:1px solid var(--border);
+  border-radius:100px;padding:10px 18px;
+  font-size:13px;font-weight:700;z-index:500;
+  opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>CRM <span>Emoji</span> League</h1>
+      <div class="sub" id="monthLabel"></div>
+    </div>
+    <div class="header-btns">
+      <button class="btn-ident" id="identBtn">
+        <span id="identIcon">👤</span>
+        <span id="identText">Set your name</span>
+      </button>
+    </div>
+  </div>
+  <div class="days-bar">
+    <span class="days-label">Days left this round</span>
+    <div class="days-right">
+      <div class="days-progress"><div class="days-fill" id="daysFill"></div></div>
+      <span class="days-val" id="daysVal">--</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="leaderboard">🏆 Standings</button>
+    <button class="tab" data-tab="moments">✨ Moments<span class="tab-badge" id="mBadge"></span></button>
+    <button class="tab" data-tab="hof">👑 Hall of Fame</button>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content" id="content">
+  <div class="empty"><div class="empty-icon">⏳</div><h3>Loading...</h3></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn">✨ Log a Moment</button>
+
+<!-- Identity modal -->
+<div class="ident-overlay" id="identOverlay">
+  <div class="ident-modal">
+    <div style="font-size:42px;margin-bottom:12px">👋</div>
+    <h2>Who are you?</h2>
+    <p>Pick your name to vote and log moments</p>
+    <div class="team-grid" id="teamGrid"></div>
+    <button class="btn-submit" id="confirmIdent" style="width:100%">Let's go →</button>
+  </div>
+</div>
+
+<!-- Submit modal -->
+<div class="overlay" id="submitOverlay">
+  <div class="modal">
+    <div class="modal-title">✨ Log an Emoji Moment</div>
+    <div class="form-field">
+      <label class="form-label">Who nailed it?</label>
+      <select class="form-select" id="nomineeSelect">
+        <option value="">Pick a teammate...</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="form-label">The emoji they used</label>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Context <span style="text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+      <input class="form-input" type="text" id="ctxInput"
+        placeholder="e.g. Used this reacting to the Q2 targets slide in #general"
+        maxlength="200">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Where?</label>
+      <select class="form-select" id="chanSelect">
+        <option>#crm-team</option>
+        <option>#general</option>
+        <option>#growth-marketing</option>
+        <option>Slack DM</option>
+        <option>Zoom / call</option>
+        <option>IRL</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" id="cancelSubmit">Cancel</button>
+      <button class="btn-submit" id="confirmSubmit">Log it 🔥 +2 pts</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TEAM = [
+  { name: 'Ed', emoji: '🧠' },
+  { name: 'Maria', emoji: '✨' },
+  { name: 'Alex', emoji: '🎯' },
+  { name: 'Millie', emoji: '🔥' },
+  { name: 'Juan', emoji: '🤌' }
+];
+const EMOJIS = [
+  '🔥','💀','😭','👀','🫡','💅','🤌','🧠','🎯','🤡',
+  '💯','🥲','🫠','😮‍💨','🧌','🎉','🫶','🪩','😤','🫥'
+];
+
+let user = localStorage.getItem('crm-emoji-user');
+let activeTab = 'leaderboard';
+let state = { moments: [], leaderboard: [], hof: [] };
+let selectedEmoji = null;
+let selectedIdentity = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function daysLeft() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() - n.getDate();
+}
+function monthPct() {
+  const n = new Date();
+  return Math.round(n.getDate() / new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() * 100);
+}
+function monthLabel() {
+  return new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+function timeAgo(ts) {
+  const m = Math.floor((Date.now() - new Date(ts)) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function teamEmoji(name) {
+  return TEAM.find(t => t.name === name)?.emoji || '?';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+
+async function fetchState() {
+  const res = await fetch('/api/state');
+  if (!res.ok) throw new Error('Could not load data');
+  return res.json();
+}
+async function apiPost(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+function renderHeader() {
+  document.getElementById('monthLabel').textContent =
+    monthLabel().toUpperCase() + ' · RESETS MONTHLY';
+  document.getElementById('daysVal').textContent = daysLeft();
+  document.getElementById('daysFill').style.width = monthPct() + '%';
+  document.getElementById('mBadge').textContent = state.moments.length || '';
+  const t = TEAM.find(t => t.name === user);
+  if (user && t) {
+    document.getElementById('identIcon').textContent = t.emoji;
+    document.getElementById('identText').textContent = user;
+  } else {
+    document.getElementById('identIcon').textContent = '👤';
+    document.getElementById('identText').textContent = 'Set your name';
+  }
+}
+
+// ── Moment card ───────────────────────────────────────────────────────────────
+
+function momentCard(m) {
+  const fires = (m.fires || []).length;
+  const fired = user && (m.fires || []).includes(user);
+  return `<div class="mc">
+    <div class="mc-top">
+      <div class="mc-left">
+        <div class="mc-emoji">${m.emoji}</div>
+        <div>
+          <div class="mc-who">${esc(m.nominee)}</div>
+          <div class="mc-where">${esc(m.channel)}</div>
+        </div>
+      </div>
+      <div class="mc-time">${timeAgo(m.ts)}</div>
+    </div>
+    ${m.context ? `<div class="mc-ctx">${esc(m.context)}</div>` : ''}
+    <div class="mc-foot">
+      <div class="mc-by">logged by ${esc(m.submittedBy)}</div>
+      <button class="fire-btn${fired ? ' fired' : ''}" data-id="${m.id}">
+        🔥${fires > 0 ? ' ' + fires : ''}
+      </button>
+    </div>
+  </div>`;
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+function renderLeaderboard() {
+  const lb = state.leaderboard;
+  const medals = ['🥇','🥈','🥉'];
+  let html = '';
+
+  // Podium: rank 2 left, rank 1 centre, rank 3 right
+  html += '<div class="podium">';
+  [lb[1], lb[0], lb[2]].filter(Boolean).forEach(p => {
+    const rank = lb.indexOf(p);
+    const isTop = rank === 0;
+    const isMe = p.name === user;
+    const displayEmoji = p.topMoment ? p.topMoment.emoji : teamEmoji(p.name);
+    html += `<div class="pod${isTop ? ' p1' : ''}${isMe ? ' mine' : ''}">
+      <div class="pod-medal">${medals[rank] || '#' + (rank + 1)}</div>
+      <div class="pod-name">${esc(p.name)}</div>
+      <div class="pod-score">${p.pts}</div>
+      <div class="pod-pts">pts</div>
+      <div class="pod-emoji">${displayEmoji}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Rows 4-5
+  if (lb.length > 3) {
+    html += '<div>';
+    lb.slice(3).forEach((p, i) => {
+      const isMe = p.name === user;
+      const displayEmoji = p.topMoment ? p.topMoment.emoji : teamEmoji(p.name);
+      html += `<div class="srow${isMe ? ' mine' : ''}">
+        <div class="srow-rank">${i + 4}</div>
+        <div class="srow-emoji">${displayEmoji}</div>
+        <div class="srow-info">
+          <div class="srow-name">${esc(p.name)}</div>
+          <div class="srow-meta">${p.noms} moment${p.noms !== 1 ? 's' : ''} · ${p.fires} fire${p.fires !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="srow-score">${p.pts}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Recent moments preview
+  const recent = [...state.moments]
+    .sort((a, b) => new Date(b.ts) - new Date(a.ts))
+    .slice(0, 3);
+  if (recent.length) {
+    html += `<div class="sec-head" style="margin-top:8px">
+      <div class="sec-label">Recent moments</div>
+      <div class="sec-count">${state.moments.length} total</div>
+    </div>`;
+    recent.forEach(m => { html += momentCard(m); });
+  }
+
+  if (!state.moments.length) {
+    html += `<div class="empty" style="margin-top:16px">
+      <div class="empty-icon">🏆</div>
+      <h3>No moments logged yet</h3>
+      <p>Hit the button below to add the first one</p>
+    </div>`;
+  }
+
+  return html;
+}
+
+// ── Moments tab ───────────────────────────────────────────────────────────────
+
+function renderMoments() {
+  const sorted = [...state.moments].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  if (!sorted.length) {
+    return `<div class="empty">
+      <div class="empty-icon">✨</div>
+      <h3>Nothing logged yet</h3>
+      <p>Be the first to recognise a great emoji moment from the team</p>
+    </div>`;
+  }
+  let html = `<div class="sec-head">
+    <div class="sec-label">All moments</div>
+    <div class="sec-count">${sorted.length} this month</div>
+  </div>`;
+  sorted.forEach(m => { html += momentCard(m); });
+  return html;
+}
+
+// ── Hall of Fame ──────────────────────────────────────────────────────────────
+
+function renderHof() {
+  let html = `<div class="sec-head">
+    <div class="sec-label">Monthly champions</div>
+    <div class="sec-count">${state.hof.length} winner${state.hof.length !== 1 ? 's' : ''}</div>
+  </div>`;
+  if (!state.hof.length) {
+    html += `<div class="empty">
+      <div class="empty-icon">👑</div>
+      <h3>No champions yet</h3>
+      <p>The first monthly winner will appear here at month end</p>
+    </div>`;
+  } else {
+    [...state.hof].reverse().forEach(w => {
+      html += `<div class="hof-card">
+        <div class="hof-trophy">🏆</div>
+        <div class="hof-info">
+          <div class="hof-winner">${esc(w.winner)}</div>
+          <div class="hof-month">${esc(w.month)}</div>
+          <div class="hof-pts">${w.pts} points · ${w.noms} moments logged</div>
+        </div>
+        <div class="hof-emoji">${w.emoji || '🏅'}</div>
+      </div>`;
+    });
+  }
+  html += `<div class="scoring-note">
+    <h4>How scoring works</h4>
+    <p>Someone logs your emoji moment → <strong>+2 pts</strong></p>
+    <p>A teammate fires your moment → <strong>+1 pt each</strong></p>
+    <p>Highest score at month end wins. Resets on the 1st.</p>
+  </div>`;
+  return html;
+}
+
+// ── Render + fire listeners ───────────────────────────────────────────────────
+
+function renderContent() {
+  const el = document.getElementById('content');
+  if (activeTab === 'leaderboard') el.innerHTML = renderLeaderboard();
+  else if (activeTab === 'moments') el.innerHTML = renderMoments();
+  else el.innerHTML = renderHof();
+
+  document.querySelectorAll('.fire-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!user) { openIdentModal(); return; }
+      try {
+        await apiPost(`/api/moments/${btn.dataset.id}/fire`, { user });
+        state = await fetchState();
+        renderContent();
+        renderHeader();
+      } catch (e) { toast(e.message); }
+    });
+  });
+}
+
+async function refresh() {
+  try {
+    state = await fetchState();
+    renderContent();
+    renderHeader();
+  } catch (e) { console.error('Refresh error:', e); }
+}
+
+// ── Identity modal ────────────────────────────────────────────────────────────
+
+function openIdentModal() {
+  document.getElementById('identOverlay').classList.add('open');
+}
+document.getElementById('identBtn').addEventListener('click', openIdentModal);
+document.getElementById('identOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('identOverlay') && user) {
+    document.getElementById('identOverlay').classList.remove('open');
+  }
+});
+
+TEAM.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'team-btn';
+  btn.innerHTML = `<div class="te">${t.emoji}</div><div class="tn">${t.name}</div>`;
+  btn.dataset.name = t.name;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    selectedIdentity = t.name;
+  });
+  document.getElementById('teamGrid').appendChild(btn);
+});
+
+document.getElementById('confirmIdent').addEventListener('click', () => {
+  if (!selectedIdentity) { toast('Pick your name first'); return; }
+  user = selectedIdentity;
+  localStorage.setItem('crm-emoji-user', user);
+  document.getElementById('identOverlay').classList.remove('open');
+  renderHeader();
+  renderContent(); // re-render to highlight your rows
+  toast(`Welcome, ${user}! 👋`);
+});
+
+// ── Submit modal ──────────────────────────────────────────────────────────────
+
+document.getElementById('fabBtn').addEventListener('click', () => {
+  if (!user) { openIdentModal(); return; }
+  document.getElementById('nomineeSelect').value = '';
+  document.getElementById('ctxInput').value = '';
+  document.querySelectorAll('.ec').forEach(e => e.classList.remove('sel'));
+  selectedEmoji = null;
+  document.getElementById('submitOverlay').classList.add('open');
+});
+document.getElementById('cancelSubmit').addEventListener('click', () => {
+  document.getElementById('submitOverlay').classList.remove('open');
+});
+document.getElementById('submitOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('submitOverlay')) {
+    document.getElementById('submitOverlay').classList.remove('open');
+  }
+});
+
+TEAM.forEach(t => {
+  const opt = document.createElement('option');
+  opt.value = t.name; opt.textContent = t.name;
+  document.getElementById('nomineeSelect').appendChild(opt);
+});
+
+EMOJIS.forEach(emoji => {
+  const div = document.createElement('div');
+  div.className = 'ec'; div.textContent = emoji;
+  div.addEventListener('click', () => {
+    document.querySelectorAll('.ec').forEach(e => e.classList.remove('sel'));
+    div.classList.add('sel');
+    selectedEmoji = emoji;
+  });
+  document.getElementById('emojiGrid').appendChild(div);
+});
+
+document.getElementById('confirmSubmit').addEventListener('click', async () => {
+  const nominee = document.getElementById('nomineeSelect').value;
+  if (!nominee) { toast('Pick a teammate'); return; }
+  if (!selectedEmoji) { toast('Choose an emoji'); return; }
+  if (nominee === user) { toast("Can't nominate yourself"); return; }
+  try {
+    await apiPost('/api/moments', {
+      nominee,
+      emoji: selectedEmoji,
+      context: document.getElementById('ctxInput').value.trim(),
+      channel: document.getElementById('chanSelect').value,
+      submittedBy: user
+    });
+    document.getElementById('submitOverlay').classList.remove('open');
+    state = await fetchState();
+    renderContent();
+    renderHeader();
+    toast(`Logged for ${nominee}! +2 pts 🎉`);
+  } catch (e) { toast(e.message); }
+});
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeTab = tab.dataset.tab;
+    renderContent();
+  });
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+async function init() {
+  renderHeader();
+  await refresh();
+  if (!user) setTimeout(openIdentModal, 600);
+  setInterval(refresh, 30000); // pick up other team members' changes live
+}
+init();
+</script>
+</body>
+</html>
