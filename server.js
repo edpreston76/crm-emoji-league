@@ -3,6 +3,7 @@ const cron = require('node-cron');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
 
 const app = express();
 app.use(express.json());
@@ -13,19 +14,55 @@ app.use(express.static(path.join(__dirname, 'public')));
 const DATA_FILE = path.join(__dirname, 'data.json');
 const TEAM = ['Ed', 'Maria', 'Alex', 'Millie', 'Juan'];
 
-function load() {
+// Database pool - only created if DATABASE_URL is set
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : null;
+
+// Load from filesystem on first boot (fallback while DB loads)
+function loadFromFile() {
   try {
     if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-  } catch (e) { console.error('Load error:', e.message); }
+  } catch (e) { console.error('[file] Load error:', e.message); }
   return { moments: {}, hof: [] };
 }
 
-function save(db) {
-  try { fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
-  catch (e) { console.error('Save error:', e.message); }
+// Load from database - called on startup, overrides the file
+async function loadFromDb() {
+  if (!pool) return null;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS app_data (key TEXT PRIMARY KEY, value TEXT NOT NULL)
+    `);
+    const res = await pool.query("SELECT value FROM app_data WHERE key = 'db'");
+    if (res.rows.length > 0) {
+      console.log('[db] Loaded data from database');
+      return JSON.parse(res.rows[0].value);
+    }
+  } catch (e) { console.error('[db] Load error:', e.message); }
+  return null;
 }
 
-let db = load();
+// Async save to database - called after every write (fire-and-forget)
+async function saveToDb() {
+  if (!pool) return;
+  try {
+    await pool.query(
+      `INSERT INTO app_data (key, value) VALUES ('db', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+      [JSON.stringify(db)]
+    );
+  } catch (e) { console.error('[db] Save error:', e.message); }
+}
+
+// Sync save - writes to file for local dev, kicks off async DB save for production
+function save(data) {
+  try { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
+  catch (e) { console.error('[file] Save error:', e.message); }
+  saveToDb(); // async, doesn't block the response
+}
+
+let db = loadFromFile(); // initial in-memory state, replaced from DB in startServer()
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -298,7 +335,21 @@ app.post('/api/trigger-reset', async (req, res) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`CRM Emoji League live on port ${PORT}`);
-  checkMissedReset();
-});
+
+async function startServer() {
+  // Load latest data from DB - this is the source of truth in production.
+  // Overrides whatever was in the local data.json (which resets on Render restarts).
+  const saved = await loadFromDb();
+  if (saved) {
+    db = saved;
+  } else if (!pool) {
+    console.log('[db] No DATABASE_URL set - using local file only (data will not survive restarts)');
+  }
+
+  app.listen(PORT, () => {
+    console.log(`CRM Emoji League live on port ${PORT}`);
+    checkMissedReset();
+  });
+}
+
+startServer();
